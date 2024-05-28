@@ -1,32 +1,95 @@
+from typing import Union, Tuple, List, Any, NoReturn
+
 import numpy as np
-from scipy import stats
-from sklearn.metrics import (
-    mean_absolute_error,
-    mean_squared_error,
-    r2_score,
-    median_absolute_error,
-)
 from shapely.geometry import Polygon, LineString
 from shapely.ops import polygonize, unary_union
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 from uncertainty_toolbox.metrics_calibration import (
     get_proportion_lists,
     get_proportion_lists_vectorized,
-    adversarial_group_calibration,
 )
 from uncertainty_toolbox.viz import filter_subset
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import plotly.express as px
+
+
+def plot_xy(
+    y_pred: np.ndarray,
+    y_std: np.ndarray,
+    y_true: np.ndarray,
+    x: np.ndarray,
+    n_subset: Union[int, None] = None,
+    ylims: Union[Tuple[float, float], None] = None,
+    xlims: Union[Tuple[float, float], None] = None,
+    num_stds_confidence_bound: int = 2,
+    show=True,
+):
+    """Plot 1D input (x) and predicted/true (y_pred/y_true) values."""
+    if n_subset is not None:
+        [y_pred, y_std, y_true, x] = filter_subset([y_pred, y_std, y_true, x], n_subset)
+
+    intervals = num_stds_confidence_bound * y_std
+
+    fig = make_subplots()
+    fig.add_trace(
+        go.Scatter(
+            x=x, y=y_pred, mode="markers", name="Predicted", line=dict(color="#ff7f0e", width=2)
+        )
+    )
+    fig.add_trace(
+        go.Scatter(x=x, y=y_true, mode="markers", name="True", line=dict(color="#1f77b4", width=2))
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=y_pred - intervals,
+            mode="lines",
+            fill="none",
+            line=dict(color="rgba(0,0,0,0)"),
+            hoverinfo="skip",
+            showlegend=False,
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=y_pred + intervals,
+            mode="lines",
+            fill="tonexty",
+            fillcolor="rgba(255, 153, 0, 0.2)",
+            line=dict(color="rgba(0,0,0,0.0)"),
+            hoverinfo="skip",
+            showlegend=True,
+            name="95% Interval",
+        )
+    )
+
+    fig.update_xaxes(title_text="x")
+    fig.update_yaxes(title_text="<b>y</b>")
+    fig.update_layout(template="none", autosize=True, height=400, width=500, font_family="Arial")
+    fig.update_layout(title="Confidence Band")
+
+    if ylims is not None:
+        fig.update_layout(yaxis_range=[ylims[0], ylims[1]])
+
+    if xlims is not None:
+        fig.update_layout(xaxis_range=[xlims[0], xlims[1]])
+
+    if show:
+        fig.show()
+
+    return fig
 
 
 def plot_intervals(
-    y_pred,
-    y_std,
-    y_true,
-    n_subset=None,
-    ylims=None,
-    num_stds_confidence_bound=2,
-    show=True,
+    y_pred: np.ndarray,
+    y_std: np.ndarray,
+    y_true: np.ndarray,
+    n_subset: Union[int, None] = None,
+    ylims: Union[Tuple[float, float], None] = None,
+    num_stds_confidence_bound: int = 2,
+    show: bool = True,
 ):
     """
     Plot predicted values (y_pred) and intervals (y_std) vs observed
@@ -68,8 +131,7 @@ def plot_intervals(
 
     fig.update_xaxes(title_text="Observed Values")
     fig.update_yaxes(title_text="<b>Predicted Values and Intervals</b>")
-    fig.update_layout(template="none", autosize=True, height=400, width=500)
-    fig.layout.font.family = "Arial"
+    fig.update_layout(template="none", autosize=True, height=400, width=500, font_family="Arial")
     fig.update_layout(title="Prediction Intervals")
 
     if ylims:
@@ -78,15 +140,17 @@ def plot_intervals(
     if show:
         fig.show()
 
+    return fig
+
 
 def plot_intervals_ordered(
-    y_pred,
-    y_std,
-    y_true,
-    n_subset=None,
-    ylims=None,
-    num_stds_confidence_bound=2,
-    show=True,
+    y_pred: np.ndarray,
+    y_std: np.ndarray,
+    y_true: np.ndarray,
+    n_subset: Union[int, None] = None,
+    ylims: Union[Tuple[float, float], None] = None,
+    num_stds_confidence_bound: int = 2,
+    show: bool = True,
 ):
     """
     Plot predicted values (y_pred) and intervals (y_std) vs observed
@@ -136,8 +200,7 @@ def plot_intervals_ordered(
 
     fig.update_xaxes(title_text="Index (Ordered by Observed Value)")
     fig.update_yaxes(title_text="<b>Predicted Values and Intervals</b>")
-    fig.update_layout(template="none", autosize=True, height=400, width=500)
-    fig.layout.font.family = "Arial"
+    fig.update_layout(template="none", autosize=True, height=400, width=500, font_family="Arial")
     fig.update_layout(title="Ordered Prediction Intervals")
 
     if ylims:
@@ -146,82 +209,20 @@ def plot_intervals_ordered(
     if show:
         fig.show()
 
-
-def plot_xy(
-    y_pred,
-    y_std,
-    y_true,
-    x,
-    n_subset=None,
-    ylims=None,
-    xlims=None,
-    num_stds_confidence_bound=2,
-    show=True,
-):
-    """Plot 1D input (x) and predicted/true (y_pred/y_true) values."""
-    if n_subset is not None:
-        [y_pred, y_std, y_true, x] = filter_subset([y_pred, y_std, y_true, x], n_subset)
-
-    intervals = num_stds_confidence_bound * y_std
-
-    fig = make_subplots()
-    fig.add_trace(
-        go.Scatter(
-            x=x, y=y_pred, mode="markers", name="Predicted", line=dict(color="#ff7f0e", width=2)
-        )
-    )
-    fig.add_trace(
-        go.Scatter(x=x, y=y_true, mode="markers", name="True", line=dict(color="#1f77b4", width=2))
-    )
-
-    fig.add_trace(
-        go.Scatter(
-            x=x,
-            y=y_pred - intervals,
-            mode="lines",
-            fill="none",
-            line=dict(color="rgba(0,0,0,0)"),
-            hoverinfo="skip",
-            showlegend=False,
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=x,
-            y=y_pred + intervals,
-            mode="lines",
-            fill="tonexty",
-            fillcolor="rgba(255, 153, 0, 0.2)",
-            line=dict(color="rgba(0,0,0,0.0)"),
-            hoverinfo="skip",
-            showlegend=True,
-            name="95% Interval",
-        )
-    )
-
-    fig.update_xaxes(title_text="x")
-    fig.update_yaxes(title_text="<b>y</b>")
-    fig.update_layout(template="none", autosize=True, height=400, width=500)
-    fig.layout.font.family = "Arial"
-    fig.update_layout(title="Confidence Band")
-
-    if ylims:
-        fig.update_layout(yaxis_range=[ylims[0], ylims[1]])
-
-    if show:
-        fig.show()
+    return fig
 
 
 def plot_calibration(
-    y_pred,
-    y_std,
-    y_true,
-    n_subset=None,
-    curve_label=None,
-    show=True,
-    vectorized=True,
-    exp_props=None,
-    obs_props=None,
+    y_pred: np.ndarray,
+    y_std: np.ndarray,
+    y_true: np.ndarray,
+    n_subset: Union[int, None] = None,
+    curve_label: Union[str, None] = None,
+    vectorized: bool = True,
+    exp_props: Union[np.ndarray, None] = None,
+    obs_props: Union[np.ndarray, None] = None,
+    prop_type: str = "interval",
+    show: bool = True,
 ):
     """
     Make calibration plot using predicted mean values (y_pred), predicted std
@@ -234,19 +235,18 @@ def plot_calibration(
         # Compute exp_proportions and obs_proportions
         if vectorized:
             (exp_proportions, obs_proportions) = get_proportion_lists_vectorized(
-                y_pred, y_std, y_true
+                y_pred, y_std, y_true, prop_type=prop_type
             )
         else:
-            (exp_proportions, obs_proportions) = get_proportion_lists(y_pred, y_std, y_true)
+            (exp_proportions, obs_proportions) = get_proportion_lists(
+                y_pred, y_std, y_true, prop_type=prop_type
+            )
     else:
         # If expected and observed proportions are give
         exp_proportions = np.array(exp_props).flatten()
         obs_proportions = np.array(obs_props).flatten()
         if exp_proportions.shape != obs_proportions.shape:
             raise RuntimeError("exp_props and obs_props shape mismatch")
-
-    # Set figure defaults
-    fontsize = 12
 
     # Set label
     if curve_label is None:
@@ -294,8 +294,7 @@ def plot_calibration(
 
     fig.update_xaxes(title_text="Predicted proportion in interval")
     fig.update_yaxes(title_text="<b>Observed proportion in interval</b>")
-    fig.update_layout(template="none", autosize=True, height=400, width=500)
-    fig.layout.font.family = "Arial"
+    fig.update_layout(template="none", autosize=True, height=400, width=500, font_family="Arial")
     fig.update_layout(title="Average Calibration")
 
     buff = 0.01
@@ -325,6 +324,8 @@ def plot_calibration(
     )
     if show:
         fig.show()
+
+    return fig
 
 
 def plot_calibration_alt(
@@ -359,9 +360,6 @@ def plot_calibration_alt(
         obs_proportions = np.array(obs_props).flatten()
         if exp_proportions.shape != obs_proportions.shape:
             raise RuntimeError("exp_props and obs_props shape mismatch")
-
-    # Set figure defaults
-    fontsize = 12
 
     # Set label
     if curve_label is None:
@@ -407,8 +405,7 @@ def plot_calibration_alt(
         )
     )
 
-    fig.update_layout(template="none", autosize=True, height=500, width=530)
-    fig.layout.font.family = "Georgia"
+    fig.update_layout(template="none", autosize=True, height=500, width=530, font_family="Arial")
     fig.update_layout(title="Average Calibration")
 
     buff = 0.01
@@ -449,3 +446,5 @@ def plot_calibration_alt(
     )
     if show:
         fig.show()
+
+    return fig

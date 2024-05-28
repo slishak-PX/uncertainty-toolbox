@@ -1,13 +1,14 @@
 """
 Examples of code for visualizations.
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc
 
 import uncertainty_toolbox.data as udata
 import uncertainty_toolbox.metrics as umetrics
-import uncertainty_toolbox.viz as uviz
+import uncertainty_toolbox.viz_plotly as uviz
 
 import neatplot
 
@@ -47,27 +48,27 @@ def make_plots(pred_mean, pred_std, idx1, idx2):
     n_subset = 50
 
     # Make xy plot
-    uviz.plotly_xy(pred_mean, pred_std, y, x, n_subset=300, ylims=ylims, xlims=[0, 15])
+    uviz.plot_xy(pred_mean, pred_std, y, x, n_subset=300, ylims=ylims, xlims=[0, 15])
     save_figure(f"xy_{idx1}_{idx2}")
     plt.show()
 
     # Make intervals plot
-    uviz.plotly_intervals(pred_mean, pred_std, y, n_subset=n_subset, ylims=ylims)
+    uviz.plot_intervals(pred_mean, pred_std, y, n_subset=n_subset, ylims=ylims)
     save_figure(f"intervals_{idx1}_{idx2}")
     plt.show()
 
     # Make calibration plot
-    uviz.plotly_calibration(pred_mean, pred_std, y)
+    uviz.plot_calibration(pred_mean, pred_std, y)
     save_figure(f"calibration_{idx1}_{idx2}")
     plt.show()
 
     # Make calibration alt plot
-    uviz.plotly_calibration_alt(pred_mean, pred_std, y)
+    uviz.plot_calibration_alt(pred_mean, pred_std, y)
     save_figure(f"calibration_{idx1}_{idx2}")
     plt.show()
 
     # Make ordered intervals plot
-    uviz.plotly_intervals_ordered(pred_mean, pred_std, y, n_subset=n_subset, ylims=ylims)
+    uviz.plot_intervals_ordered(pred_mean, pred_std, y, n_subset=n_subset, ylims=ylims)
     save_figure(f"intervals_ordered_{idx1}_{idx2}")
     plt.show()
 
@@ -77,8 +78,8 @@ pred_mean_list = [f]
 
 pred_std_list = [
     std * 0.5,  # overconfident
-    #std * 2.0,  # underconfident
-    #std,  # correct
+    # std * 2.0,  # underconfident
+    # std,  # correct
 ]
 
 # Loop through, make plots, and compute metrics

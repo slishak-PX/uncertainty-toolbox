@@ -4,7 +4,7 @@ Examples of code for visualizations.
 
 import numpy as np
 
-import uncertainty_toolbox.viz as uviz
+import uncertainty_toolbox.viz_plotly as uviz
 import uncertainty_toolbox.data as udata
 
 import neatplot
@@ -27,6 +27,6 @@ print("* |y_true - y_pred|: {}".format(np.abs(y_true - y_pred)))
 print("* y_std: {}".format(y_std))
 
 # Plot
-uviz.plotly_intervals(y_pred, y_std, y_true, show=True)
-uviz.plotly_calibration(y_pred, y_std, y_true, show=True)
-uviz.plotly_intervals_ordered(y_pred, y_std, y_true, show=True)
+uviz.plot_intervals(y_pred, y_std, y_true, show=True)
+uviz.plot_calibration(y_pred, y_std, y_true, show=True)
+uviz.plot_intervals_ordered(y_pred, y_std, y_true, show=True)

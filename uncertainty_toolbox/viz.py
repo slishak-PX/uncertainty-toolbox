@@ -6,7 +6,6 @@ from typing import Union, Tuple, List, Any, NoReturn
 import pathlib
 
 import numpy as np
-from scipy import stats
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -14,7 +13,6 @@ from uncertainty_toolbox.metrics_calibration import (
     get_proportion_lists,
     get_proportion_lists_vectorized,
     adversarial_group_calibration,
-    miscalibration_area,
     miscalibration_area_from_proportions,
 )
 
